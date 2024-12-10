@@ -264,6 +264,7 @@ public class GuiFilterModule extends GenericGuiContainer<GenericTileEntity, Filt
                 damageMode.getCurrentChoiceIndex() == 1,
                 componentMode.getCurrentChoiceIndex() == 1,
                 modMode.getCurrentChoiceIndex() == 1);
+        stack.set(FilterModule.ITEM_FILTERMODULE_DATA, data);
         RFToolsBaseMessages.sendToServer(PacketSyncHandItem.create(minecraft.player));
    }
 }

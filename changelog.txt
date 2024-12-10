@@ -1,3 +1,6 @@
+Upcoming:
+- Fixed a bug in the filter module where it would not remember it's settings when changes were made in the GUI
+
 1.21-6.0.2:
 - Update to latest McJtyLib
 
