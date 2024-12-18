@@ -8,6 +8,7 @@ import mcjty.lib.builder.BlockBuilder;
 import mcjty.lib.container.ContainerFactory;
 import mcjty.lib.container.GenericContainer;
 import mcjty.lib.container.GenericItemHandler;
+import mcjty.lib.setup.Registration;
 import mcjty.lib.tileentity.Cap;
 import mcjty.lib.tileentity.CapType;
 import mcjty.lib.tileentity.GenericEnergyStorage;
@@ -19,7 +20,9 @@ import mcjty.rftoolsbase.modules.infuser.data.InfuserData;
 import mcjty.rftoolsbase.modules.various.VariousModule;
 import mcjty.rftoolsbase.tools.ManualHelper;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.core.component.DataComponentMap;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
@@ -58,11 +61,11 @@ public class MachineInfuserTileEntity extends TickingTileEntity {
             })
             .build();
     @Cap(type = CapType.ITEMS_AUTOMATION)
-    private static final Function<MachineInfuserTileEntity, GenericItemHandler> itemCap = be -> be.items;
+    private static final Function<MachineInfuserTileEntity, GenericItemHandler> ITEM_HANDLER = be -> be.items;
 
     private final GenericEnergyStorage energyStorage = new GenericEnergyStorage(this, true, MachineInfuserConfiguration.MAXENERGY.get(), MachineInfuserConfiguration.RECEIVEPERTICK.get());
     @Cap(type = CapType.ENERGY)
-    private static final Function<MachineInfuserTileEntity, GenericEnergyStorage> energyStorageCap = be -> be.energyStorage;
+    private static final Function<MachineInfuserTileEntity, GenericEnergyStorage> ENERGY_HANDLER = be -> be.energyStorage;
 
     @Cap(type = CapType.CONTAINER)
     private static final Function<MachineInfuserTileEntity, MenuProvider> screenHandler = be -> (new DefaultContainerProvider<GenericContainer>("Machine Infuser")
@@ -71,9 +74,9 @@ public class MachineInfuserTileEntity extends TickingTileEntity {
             .energyHandler(() -> be.energyStorage)
             .setupSync(be));
 
-    private final IInfusable infusableHandler = new DefaultInfusable(this);
+    private final DefaultInfusable infusable = new DefaultInfusable(this);
     @Cap(type = CapType.INFUSABLE)
-    private static final Function<MachineInfuserTileEntity, IInfusable> infusableHandlerCap = be -> be.infusableHandler;
+    private static final Function<MachineInfuserTileEntity, IInfusable> INFUSABLE_HANDLER = be -> be.infusable;
 
     public MachineInfuserTileEntity(BlockPos pos, BlockState state) {
         super(MachineInfuserModule.MACHINE_INFUSER.be().get(), pos, state);
@@ -110,8 +113,27 @@ public class MachineInfuserTileEntity extends TickingTileEntity {
     }
 
     @Override
+    protected void loadAdditional(CompoundTag tag, HolderLookup.Provider provider) {
+        super.loadAdditional(tag, provider);
+        energyStorage.load(tag, "energy", provider);
+        items.load(tag, "items", provider);
+        infusable.load(tag, "infusable");
+    }
+
+    @Override
+    protected void saveAdditional(CompoundTag tag, HolderLookup.Provider provider) {
+        super.saveAdditional(tag, provider);
+        energyStorage.save(tag, "energy", provider);
+        items.save(tag, "items", provider);
+        infusable.save(tag, "infusable");
+    }
+
+    @Override
     protected void applyImplicitComponents(DataComponentInput input) {
         super.applyImplicitComponents(input);
+        energyStorage.applyImplicitComponents(input.get(Registration.ITEM_ENERGY));
+        items.applyImplicitComponents(input.get(Registration.ITEM_INVENTORY));
+        infusable.applyImplicitComponents(input.get(Registration.ITEM_INFUSABLE));
         var data = input.get(MachineInfuserModule.ITEM_INFUSER_DATA);
         if (data != null) {
             setData(MachineInfuserModule.INFUSER_DATA, data);
@@ -121,6 +143,9 @@ public class MachineInfuserTileEntity extends TickingTileEntity {
     @Override
     protected void collectImplicitComponents(DataComponentMap.Builder builder) {
         super.collectImplicitComponents(builder);
+        energyStorage.collectImplicitComponents(builder);
+        items.collectImplicitComponents(builder);
+        infusable.collectImplicitComponents(builder);
         var data = getData(MachineInfuserModule.INFUSER_DATA);
         builder.set(MachineInfuserModule.ITEM_INFUSER_DATA, data);
     }
@@ -159,7 +184,7 @@ public class MachineInfuserTileEntity extends TickingTileEntity {
 
     private void startInfusing() {
         int defaultCost = MachineInfuserConfiguration.RFPERTICK.get();
-        int rf = (int) (defaultCost * (2.0f - infusableHandler.getInfusedFactor()) / 2.0f);
+        int rf = (int) (defaultCost * (2.0f - infusable.getInfusedFactor()) / 2.0f);
 
         if (energyStorage.getEnergy() < rf) {
             // Not enough energy.
@@ -173,16 +198,4 @@ public class MachineInfuserTileEntity extends TickingTileEntity {
         }
         setData(MachineInfuserModule.INFUSER_DATA, new InfuserData(5));
     }
-
-//    @Override
-//    protected void loadAdditional(CompoundTag tagCompound, HolderLookup.Provider pRegistries) {
-//        super.loadAdditional(tagCompound, pRegistries);
-//        infusing = tagCompound.getCompound("Info").getInt("infusing");
-//    }
-//
-//    @Override
-//    protected void saveAdditional(CompoundTag tagCompound, HolderLookup.Provider provider) {
-//        super.saveAdditional(tagCompound, provider);
-//        getOrCreateInfo(tagCompound).putInt("infusing", infusing);
-//    }
 }

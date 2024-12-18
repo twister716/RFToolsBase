@@ -7,6 +7,7 @@ import mcjty.lib.container.GenericContainer;
 import mcjty.lib.datagen.DataGen;
 import mcjty.lib.datagen.Dob;
 import mcjty.lib.modules.IModule;
+import mcjty.lib.setup.Registration;
 import mcjty.rftoolsbase.modules.infuser.blocks.MachineInfuserTileEntity;
 import mcjty.rftoolsbase.modules.infuser.client.GuiMachineInfuser;
 import mcjty.rftoolsbase.modules.infuser.data.InfuserData;
@@ -75,7 +76,7 @@ public class MachineInfuserModule implements IModule {
         dataGen.add(
                 Dob.blockBuilder(MACHINE_INFUSER)
                         .ironPickaxeTags()
-                        .standardLoot()
+                        .standardLoot(ITEM_INFUSER_DATA.get(), Registration.ITEM_INFUSABLE.get())
                         .shaped(builder -> builder
                                 .define('s', VariousModule.DIMENSIONALSHARD.get())
                                 .define('M', VariousModule.MACHINE_FRAME.get())

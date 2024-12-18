@@ -1,3 +1,6 @@
+1.21-6.0.4:
+- The machine infuser will now correctly remember it's state when the world is reloaded and also when the block is broken and placed again
+
 1.21-6.0.3:
 - Fixed a bug in the filter module where it would not remember it's settings when changes were made in the GUI
 
